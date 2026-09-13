@@ -1,4 +1,4 @@
-# optvol — Options Pricing & Volatility Surface Engine
+# Options Pricing & Volatility Surface Engine
 
 A Python engine for pricing options and analyzing implied volatility using live market data.
 
