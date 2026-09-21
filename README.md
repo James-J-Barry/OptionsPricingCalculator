@@ -4,6 +4,8 @@
 
 A Python engine for pricing options and analyzing implied volatility using live market data.
 
+**[Live demo](https://jbvolatilitysurface.streamlit.app/)** — note: Yahoo Finance often blocks cloud hosts, so the hosted demo may fall back to a saved SPY snapshot (it says so in a banner). Run locally for live data.
+
 ![Streamlit app: 3D implied-volatility surface for SPY](docs/app-screenshot.jpg)
 
 ## What it does
