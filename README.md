@@ -1,6 +1,10 @@
 # Options Pricing & Volatility Surface Engine
 
+[![tests](https://github.com/James-J-Barry/OptionsPricingCalculator/actions/workflows/tests.yml/badge.svg)](https://github.com/James-J-Barry/OptionsPricingCalculator/actions/workflows/tests.yml)
+
 A Python engine for pricing options and analyzing implied volatility using live market data.
+
+![Streamlit app: 3D implied-volatility surface for SPY](docs/app-screenshot.jpg)
 
 ## What it does
 
