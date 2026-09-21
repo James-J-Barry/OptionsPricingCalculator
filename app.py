@@ -14,7 +14,7 @@ import pandas as pd
 import streamlit as st
 
 from optvol.plots import smile_figure, surface_figure, term_structure_figure
-from optvol.surface import load_surface
+from optvol.surface import load_snapshot, load_surface
 
 st.set_page_config(page_title="Volatility Surface Engine", layout="wide")
 
@@ -54,8 +54,15 @@ try:
     with st.spinner(f"Loading and pricing {symbol} option chains..."):
         surf = _load(symbol, max_expiries, min_days)
 except Exception as exc:  # noqa: BLE001 -- surface to the user
-    st.error(f"Could not build a surface for {symbol!r}: {exc}")
-    st.stop()
+    saved = load_snapshot(symbol)
+    if saved is None:
+        st.error(f"Could not build a surface for {symbol!r}: {exc}")
+        st.stop()
+    surf, saved_at = saved
+    st.warning(
+        f"Live data for {symbol!r} is unavailable ({exc}). "
+        f"Showing a saved snapshot from {saved_at[:10]}."
+    )
 
 # --- headline metrics ------------------------------------------------------
 ts = surf.term_structure()

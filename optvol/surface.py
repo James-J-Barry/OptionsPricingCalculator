@@ -15,7 +15,9 @@ interpolated grid suitable for a 3D plot.
 """
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Dict, List, Optional
 
 import numpy as np
@@ -133,7 +135,11 @@ def load_surface(
     """
     all_exp = list_expiries(symbol)
     if not all_exp:
-        raise ValueError(f"No listed options for {symbol!r}.")
+        raise ValueError(
+            f"No option expiries returned for {symbol!r}. The ticker may have no "
+            "listed options, or the data feed (Yahoo Finance) may be blocking "
+            "this host."
+        )
     chosen = (
         expiries if expiries is not None
         else _select_expiries(all_exp, max_expiries, min_days)
@@ -178,3 +184,46 @@ def load_surface(
         expiries=loaded,
         drop_report=drop_report,
     )
+
+
+# ------------------------------------------------------------- snapshots
+# A saved surface lets the app keep working when the live data feed is
+# unreachable (Yahoo throttles shared cloud IPs, e.g. Streamlit Community Cloud).
+SNAPSHOT_DIR = Path(__file__).resolve().parent.parent / "data" / "snapshots"
+
+
+def save_snapshot(surf: VolSurface, path: Optional[Path] = None) -> Path:
+    """Write a surface to ``data/snapshots/<SYMBOL>.json`` (points + metadata)."""
+    path = Path(path) if path else SNAPSHOT_DIR / f"{surf.symbol}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    meta = {
+        "symbol": surf.symbol,
+        "spot": surf.spot,
+        "risk_free_rate": surf.risk_free_rate,
+        "dividend_yield": surf.dividend_yield,
+        "expiries": surf.expiries,
+        "drop_report": surf.drop_report,
+        "saved_at": pd.Timestamp.now(tz="UTC").isoformat(timespec="seconds"),
+    }
+    path.write_text(json.dumps({"meta": meta, "points": json.loads(surf.points.to_json(orient="split"))}))
+    return path
+
+
+def load_snapshot(symbol: str) -> Optional[tuple]:
+    """Return ``(VolSurface, saved_at)`` for a saved ticker, or None if absent."""
+    path = SNAPSHOT_DIR / f"{symbol.upper()}.json"
+    if not path.exists():
+        return None
+    blob = json.loads(path.read_text())
+    m = blob["meta"]
+    points = pd.DataFrame(**blob["points"])
+    surf = VolSurface(
+        symbol=m["symbol"],
+        spot=m["spot"],
+        risk_free_rate=m["risk_free_rate"],
+        dividend_yield=m["dividend_yield"],
+        points=points,
+        expiries=m["expiries"],
+        drop_report=m["drop_report"],
+    )
+    return surf, m["saved_at"]

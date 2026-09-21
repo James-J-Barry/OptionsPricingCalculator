@@ -210,4 +210,12 @@ def load_chain(symbol: str, expiry: Optional[str] = None) -> ChainSnapshot:
 
 
 def list_expiries(symbol: str) -> List[str]:
-    return list(yf.Ticker(symbol).options)
+    """Available expiries. Raises with the underlying cause if the feed fails.
+
+    yfinance returns an empty tuple (instead of raising) when Yahoo rejects the
+    request, which is indistinguishable from a ticker with no options.
+    """
+    try:
+        return list(yf.Ticker(symbol).options)
+    except Exception as exc:  # noqa: BLE001
+        raise ValueError(f"Data feed error for {symbol!r}: {exc}") from exc
